@@ -98,24 +98,21 @@ Fields:
 - Reservation time
 - Party size
 - Duration
-- Table preference
-- Special notes
-- Internal notes
+- Notes
 
 Required fields:
 - Customer name
 - Date
 - Time
-- Party size
 
 Optional fields:
 - Phone number
+- Party size
 - Duration
-- Table preference
 - Notes
 
 Recommended default duration:
-90 minutes
+240 minutes
 
 Popup buttons:
 - Create calendar event
@@ -127,7 +124,7 @@ Validation:
 - Name cannot be empty.
 - Date must be valid.
 - Time must be valid.
-- Party size must be a positive number.
+- If party size is entered, it must be a positive number.
 - If validation fails, show a clear error message and keep the form open.
 
 6. Calendar integration
@@ -135,7 +132,8 @@ Purpose:
 Create a Google Calendar event from the completed reservation form.
 
 Event title format:
-Reservation - {Customer Name} - {Party Size} people
+Reservation - {Customer Name}
+Reservation - {Customer Name} - {Party Size} people, when party size is entered
 
 Example:
 Reservation - Alex - 4 people
@@ -144,9 +142,7 @@ Event description format:
 Customer: Alex
 Phone: 416-555-1234
 Party size: 4
-Table preference: Patio
 Notes: Birthday dinner
-Created by: Android Call Reservation Helper
 
 Event time:
 - Start time: selected date and time.
@@ -323,7 +319,7 @@ Reservation:
 - date: LocalDate
 - time: LocalTime
 - durationMinutes: Int
-- partySize: Int
+- partySize: Int?
 - tablePreference: String?
 - notes: String?
 - internalNotes: String?
