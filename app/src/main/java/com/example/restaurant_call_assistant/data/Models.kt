@@ -16,7 +16,9 @@ data class Reservation(
     val status: ReservationStatus,
     val errorMessage: String?,
     val createdAt: Long = System.currentTimeMillis(),
-    val updatedAt: Long = System.currentTimeMillis()
+    val updatedAt: Long = System.currentTimeMillis(),
+    val adultCount: Int? = null,
+    val childCount: Int? = null
 )
 
 enum class ReservationStatus {

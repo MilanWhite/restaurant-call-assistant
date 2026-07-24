@@ -95,6 +95,8 @@ class LocalStore(context: Context) {
         .put("reservationTime", reservationTime)
         .put("durationMinutes", durationMinutes)
         .put("partySize", partySize)
+        .put("adultCount", adultCount)
+        .put("childCount", childCount)
         .put("tablePreference", tablePreference)
         .put("eventType", eventType)
         .put("notes", notes)
@@ -113,6 +115,8 @@ class LocalStore(context: Context) {
         reservationTime = optString("reservationTime"),
         durationMinutes = optInt("durationMinutes", 240),
         partySize = if (has("partySize") && !isNull("partySize")) optInt("partySize") else null,
+        adultCount = if (has("adultCount") && !isNull("adultCount")) optInt("adultCount") else null,
+        childCount = if (has("childCount") && !isNull("childCount")) optInt("childCount") else null,
         tablePreference = optString("tablePreference").ifBlank { null },
         eventType = optString("eventType").ifBlank { null },
         notes = optString("notes").ifBlank { null },

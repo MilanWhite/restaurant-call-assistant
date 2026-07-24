@@ -150,7 +150,10 @@ fun Reservation.eventDescription(): String = buildString {
     appendLine("Customer: $customerName")
     appendLine("Phone: ${phoneNumber.orEmpty()}")
     partySize?.let { appendLine("Party size: $it") }
+    adultCount?.let { appendLine("Adults: $it") }
+    childCount?.let { appendLine("Children: $it") }
     eventType?.let { appendLine("Event type: $it") }
+    tablePreference?.let { appendLine("Preference: $it") }
     append("Notes: ${notes.orEmpty()}")
 }
 

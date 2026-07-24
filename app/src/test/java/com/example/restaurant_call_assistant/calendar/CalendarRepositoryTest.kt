@@ -51,4 +51,29 @@ class CalendarRepositoryTest {
         )
     }
 
+    @Test
+    fun eventDescription_containsPeopleBreakdownAndPreference() {
+        val reservation = Reservation(
+            customerName = "Alex",
+            phoneNumber = "416-555-1234",
+            reservationDate = "2026-07-21",
+            reservationTime = "18:30",
+            durationMinutes = 120,
+            partySize = 5,
+            tablePreference = "Patio",
+            eventType = "Birthday",
+            notes = null,
+            internalNotes = null,
+            calendarEventId = null,
+            status = ReservationStatus.DRAFT,
+            errorMessage = null,
+            adultCount = 3,
+            childCount = 2
+        )
+
+        assertEquals(
+            "Customer: Alex\nPhone: 416-555-1234\nParty size: 5\nAdults: 3\nChildren: 2\nEvent type: Birthday\nPreference: Patio\nNotes: ",
+            reservation.eventDescription()
+        )
+    }
 }

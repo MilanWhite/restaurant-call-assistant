@@ -202,9 +202,11 @@ class ReservationOverlayService : Service() {
         customerName.trackCallerFieldEdits { callerNameEdited = true }
         phone.trackCallerFieldEdits { callerPhoneEdited = true }
         val reservationDateTime = dateTimeInput()
-        val partySize = input("Optional", InputType.TYPE_CLASS_NUMBER)
+        val adults = input("Optional", InputType.TYPE_CLASS_NUMBER)
+        val children = input("Optional", InputType.TYPE_CLASS_NUMBER)
         val duration = durationInput(store.getSettings().defaultDurationMinutes)
         val eventType = eventTypeInput()
+        val preference = preferenceInput()
         val notes = input("Optional", singleLine = false)
         val errorText = TextView(this).apply {
             setTextColor(ErrorRed)
@@ -216,9 +218,10 @@ class ReservationOverlayService : Service() {
         content.body.addLabeledInput("Customer name *", customerName)
         content.body.addLabeledInput("Phone number", phone)
         content.body.addLabeledInput("Date and time *", reservationDateTime.input)
-        content.body.addLabeledInput("Party size", partySize)
+        content.body.addSplitLabeledInputs("Number of people", "Adults", adults, "Children", children)
         content.body.addLabeledInput("Duration", duration.input)
         content.body.addLabeledInput("Event type", eventType)
+        content.body.addLabeledInput("Preference", preference)
         content.body.addLabeledInput("Notes", notes)
         content.body.addView(errorText)
 
@@ -231,7 +234,7 @@ class ReservationOverlayService : Service() {
             text = "Save draft"
             styleSecondaryButton()
             setOnClickListener {
-                validateForm(customerName, reservationDateTime, partySize, duration)?.let { message ->
+                validateForm(customerName, reservationDateTime, adults, children, duration)?.let { message ->
                     errorText.showError(message)
                     return@setOnClickListener
                 }
@@ -240,9 +243,11 @@ class ReservationOverlayService : Service() {
                         customerName,
                         phone,
                         reservationDateTime,
-                        partySize,
+                        adults,
+                        children,
                         duration,
                         eventType,
+                        preference,
                         notes,
                         ReservationStatus.DRAFT,
                         null,
@@ -257,7 +262,7 @@ class ReservationOverlayService : Service() {
             text = "Create event"
             stylePrimaryButton()
             setOnClickListener {
-                validateForm(customerName, reservationDateTime, partySize, duration)?.let { message ->
+                validateForm(customerName, reservationDateTime, adults, children, duration)?.let { message ->
                     errorText.showError(message)
                     return@setOnClickListener
                 }
@@ -265,9 +270,11 @@ class ReservationOverlayService : Service() {
                     customerName,
                     phone,
                     reservationDateTime,
-                    partySize,
+                    adults,
+                    children,
                     duration,
                     eventType,
+                    preference,
                     notes,
                     ReservationStatus.DRAFT,
                     null,
@@ -393,12 +400,20 @@ class ReservationOverlayService : Service() {
         return value
     }
 
-    private fun eventTypeInput(): Spinner {
+    private fun eventTypeInput(): Spinner = selectionInput(EVENT_TYPES, mutedPosition = 0)
+
+    private fun preferenceInput(): Spinner {
+        return selectionInput(PREFERENCES).apply {
+            setSelection(PREFERENCES.indexOf(DEFAULT_PREFERENCE))
+        }
+    }
+
+    private fun selectionInput(items: List<String>, mutedPosition: Int? = null): Spinner {
         return Spinner(this).apply {
             adapter = object : ArrayAdapter<String>(
                 this@ReservationOverlayService,
                 android.R.layout.simple_spinner_item,
-                EVENT_TYPES
+                items
             ) {
                 override fun getView(position: Int, convertView: View?, parent: ViewGroup): View {
                     return LinearLayout(this@ReservationOverlayService).apply {
@@ -408,7 +423,7 @@ class ReservationOverlayService : Service() {
                         addView(TextView(this@ReservationOverlayService).apply {
                             text = getItem(position)
                             textSize = FORM_INPUT_TEXT_SIZE_SP
-                            setTextColor(if (position == 0) InkMuted else Black)
+                            setTextColor(if (position == mutedPosition) InkMuted else Black)
                             gravity = Gravity.CENTER_VERTICAL
                             layoutParams = LinearLayout.LayoutParams(
                                 0,
@@ -429,7 +444,7 @@ class ReservationOverlayService : Service() {
                     return TextView(this@ReservationOverlayService).apply {
                         text = getItem(position)
                         textSize = FORM_INPUT_TEXT_SIZE_SP
-                        setTextColor(if (position == 0) InkMuted else Black)
+                        setTextColor(if (position == mutedPosition) InkMuted else Black)
                         gravity = Gravity.CENTER_VERTICAL
                         setPadding(dp(12), 0, dp(12), 0)
                         minHeight = dp(28)
@@ -560,61 +575,128 @@ class ReservationOverlayService : Service() {
                 setMargins(0, dp(6), 0, 0)
             }
         }
-        group.addView(
-            TextView(this@ReservationOverlayService).apply {
-                text = label
-                setTextColor(InkMuted)
-                textSize = 11f
-                typeface = Typeface.DEFAULT_BOLD
-                setPadding(dp(2), 0, 0, dp(2))
-            }
-        )
+        group.addView(formLabel(label))
         group.addView(input)
         addView(group)
+    }
+
+    private fun LinearLayout.addSplitLabeledInputs(
+        label: String,
+        leftLabel: String,
+        leftInput: View,
+        rightLabel: String,
+        rightInput: View
+    ) {
+        val group = LinearLayout(this@ReservationOverlayService).apply {
+            orientation = LinearLayout.VERTICAL
+            layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            ).apply {
+                setMargins(0, dp(6), 0, 0)
+            }
+        }
+        group.addView(formLabel(label))
+        group.addView(
+            LinearLayout(this@ReservationOverlayService).apply {
+                orientation = LinearLayout.HORIZONTAL
+                addView(splitInputGroup(leftLabel, leftInput, endMargin = dp(4)))
+                addView(splitInputGroup(rightLabel, rightInput, startMargin = dp(4)))
+            }
+        )
+        addView(group)
+    }
+
+    private fun formLabel(label: String) = TextView(this).apply {
+        text = label
+        setTextColor(InkMuted)
+        textSize = 11f
+        typeface = Typeface.DEFAULT_BOLD
+        setPadding(dp(2), 0, 0, dp(2))
+    }
+
+    private fun splitInputGroup(
+        label: String,
+        input: View,
+        startMargin: Int = 0,
+        endMargin: Int = 0
+    ) = LinearLayout(this).apply {
+        orientation = LinearLayout.VERTICAL
+        layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f).apply {
+            marginStart = startMargin
+            marginEnd = endMargin
+        }
+        addView(formLabel(label))
+        addView(input)
     }
 
     private fun validateForm(
         customerName: EditText,
         reservationDateTime: ReservationDateTimeInput,
-        partySize: EditText,
+        adults: EditText,
+        children: EditText,
         duration: ReservationDurationInput
     ): String? {
         if (customerName.text.toString().trim().isBlank()) return "Customer name is required."
         if (!isValidDateTime(reservationDateTime.date, reservationDateTime.time)) return "Choose a valid date and time."
-        val enteredPartySize = partySize.text.toString().trim().toIntOrNull()
-        if (partySize.text.toString().trim().isNotBlank() && (enteredPartySize == null || enteredPartySize <= 0)) {
-            return "Party size must be a positive number."
+        val adultCount = adults.optionalPositiveInt()
+        if (adults.text.toString().isNotBlank() && adultCount == null) {
+            return "Adults must be a positive number."
+        }
+        val childCount = children.optionalPositiveInt()
+        if (children.text.toString().isNotBlank() && childCount == null) {
+            return "Children must be a positive number."
+        }
+        if ((adultCount?.toLong() ?: 0L) + (childCount?.toLong() ?: 0L) > Int.MAX_VALUE) {
+            return "The total number of people is too large."
         }
         if (duration.totalMinutes <= 0) return "Choose a duration."
         return null
+    }
+
+    private fun EditText.optionalPositiveInt(): Int? {
+        return text.toString().trim().toIntOrNull()?.takeIf { it > 0 }
     }
 
     private fun formReservation(
         customerName: EditText,
         phone: EditText,
         reservationDateTime: ReservationDateTimeInput,
-        partySize: EditText,
+        adults: EditText,
+        children: EditText,
         duration: ReservationDurationInput,
         eventType: Spinner,
+        preference: Spinner,
         notes: EditText,
         status: ReservationStatus,
         eventId: String?,
         error: String?
-    ) = Reservation(
-        customerName = customerName.text.toString().trim(),
-        phoneNumber = phone.text.toString().trim().ifBlank { null },
-        reservationDate = reservationDateTime.date,
-        reservationTime = reservationDateTime.time,
-        durationMinutes = duration.totalMinutes,
-        partySize = partySize.text.toString().trim().toIntOrNull(),
-        tablePreference = null,
-        eventType = eventType.selectedItem.toString().takeIf { eventType.selectedItemPosition > 0 },
-        notes = notes.text.toString().trim().ifBlank { null },
-        internalNotes = null,
-        calendarEventId = eventId,
-        status = status,
-        errorMessage = error
-    )
+    ): Reservation {
+        val adultCount = adults.optionalPositiveInt()
+        val childCount = children.optionalPositiveInt()
+        val partySize = if (adultCount == null && childCount == null) {
+            null
+        } else {
+            ((adultCount?.toLong() ?: 0L) + (childCount?.toLong() ?: 0L)).toInt()
+        }
+        return Reservation(
+            customerName = customerName.text.toString().trim(),
+            phoneNumber = phone.text.toString().trim().ifBlank { null },
+            reservationDate = reservationDateTime.date,
+            reservationTime = reservationDateTime.time,
+            durationMinutes = duration.totalMinutes,
+            partySize = partySize,
+            tablePreference = preference.selectedItem.toString().takeUnless { it == DEFAULT_PREFERENCE },
+            eventType = eventType.selectedItem.toString().takeIf { eventType.selectedItemPosition > 0 },
+            notes = notes.text.toString().trim().ifBlank { null },
+            internalNotes = null,
+            calendarEventId = eventId,
+            status = status,
+            errorMessage = error,
+            adultCount = adultCount,
+            childCount = childCount
+        )
+    }
 
     private fun makeDraggable(view: View, onTap: () -> Unit) {
         var startX = 0
@@ -840,6 +922,8 @@ class ReservationOverlayService : Service() {
             "Birthday",
             "Other"
         )
+        private val PREFERENCES = listOf("Patio", "Indoor", "None")
+        private const val DEFAULT_PREFERENCE = "None"
 
         private const val ACTION_SHOW = "com.example.restaurant_call_assistant.SHOW_RESERVATION_OVERLAY"
         private const val ACTION_CLOSE = "com.example.restaurant_call_assistant.CLOSE_RESERVATION_OVERLAY"
