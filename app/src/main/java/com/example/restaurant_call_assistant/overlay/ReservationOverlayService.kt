@@ -103,8 +103,13 @@ class ReservationOverlayService : Service() {
         }
 
         overlayView?.let {
-            if (callSessionId != NO_CALL_SESSION && callSessionId == activeCallSessionId) {
-                updateCaller(callerNumber)
+            if (callSessionId != NO_CALL_SESSION) {
+                if (callSessionId == activeCallSessionId) {
+                    updateCaller(callerNumber)
+                } else {
+                    activeCallSessionId = callSessionId
+                    replaceCaller(callerNumber)
+                }
             }
             it.visibility = View.VISIBLE
             return
@@ -339,6 +344,20 @@ class ReservationOverlayService : Service() {
             if (!contactName.isNullOrBlank() && !callerNameEdited && callerNameInput?.text.isNullOrBlank()) {
                 callerNameInput?.setText(contactName)
             }
+        } finally {
+            applyingCallerUpdate = false
+        }
+    }
+
+    private fun replaceCaller(callerNumber: String?) {
+        val number = callerNumber?.trim()?.takeIf(String::isNotEmpty)
+        val settings = store.getSettings()
+        applyingCallerUpdate = true
+        try {
+            callerPhoneInput?.setText(number.takeIf { settings.autoFillCallerNumber }.orEmpty())
+            callerNameInput?.setText(contactNameForPhone(number).orEmpty())
+            callerNameEdited = false
+            callerPhoneEdited = false
         } finally {
             applyingCallerUpdate = false
         }

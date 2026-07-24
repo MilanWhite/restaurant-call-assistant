@@ -25,6 +25,7 @@ class CallReceiver : BroadcastReceiver() {
                     intent.getStringExtra(TelephonyManager.EXTRA_INCOMING_NUMBER)
                 )
             }
+            TelephonyManager.EXTRA_STATE_OFFHOOK -> IncomingCallCoordinator.onOffhook(context)
             TelephonyManager.EXTRA_STATE_IDLE -> IncomingCallCoordinator.onCallEnded()
         }
     }
