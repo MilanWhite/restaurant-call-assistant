@@ -223,7 +223,7 @@ class ReservationOverlayService : Service() {
         content.body.addLabeledInput("Customer name *", customerName)
         content.body.addLabeledInput("Phone number", phone)
         content.body.addLabeledInput("Date and time *", reservationDateTime.input)
-        content.body.addSplitLabeledInputs("Number of people", "Adults", adults, "Children", children)
+        content.body.addSplitLabeledInputs("Adults", adults, "Children", children)
         content.body.addLabeledInput("Duration", duration.input)
         content.body.addLabeledInput("Event type", eventType)
         content.body.addLabeledInput("Preference", preference)
@@ -600,7 +600,6 @@ class ReservationOverlayService : Service() {
     }
 
     private fun LinearLayout.addSplitLabeledInputs(
-        label: String,
         leftLabel: String,
         leftInput: View,
         rightLabel: String,
@@ -615,7 +614,6 @@ class ReservationOverlayService : Service() {
                 setMargins(0, dp(6), 0, 0)
             }
         }
-        group.addView(formLabel(label))
         group.addView(
             LinearLayout(this@ReservationOverlayService).apply {
                 orientation = LinearLayout.HORIZONTAL

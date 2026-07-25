@@ -134,7 +134,7 @@ private fun ReservationHelperApp() {
         onboardingComplete = store.isOnboardingComplete()
     }
 
-    if (!onboardingComplete || !CallScreeningRole.isReady(context)) {
+    if (!onboardingComplete) {
         OnboardingScreen(
             onComplete = {
                 store.setOnboardingComplete(true)
@@ -224,15 +224,13 @@ private fun OnboardingScreen(onComplete: () -> Unit) {
     var ready by remember {
         mutableStateOf(
             context.requiredPermissionsGranted() &&
-                context.canDrawOverlaysCompat() &&
-                CallScreeningRole.isReady(context)
+                context.canDrawOverlaysCompat()
         )
     }
     fun refreshPermissions() {
         refreshKey++
         ready = context.requiredPermissionsGranted() &&
-            context.canDrawOverlaysCompat() &&
-            CallScreeningRole.isReady(context)
+            context.canDrawOverlaysCompat()
     }
     val launcher = rememberLauncherForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) {
         refreshPermissions()
@@ -298,18 +296,6 @@ private fun OnboardingScreen(onComplete: () -> Unit) {
                         refreshPermissions()
                     }
                 )
-                if (CallScreeningRole.isAvailable(context)) {
-                    SecondaryButton(
-                        text = if (CallScreeningRole.isHeld(context)) {
-                            "Caller ID enabled"
-                        } else {
-                            "Enable caller ID"
-                        },
-                        onClick = {
-                            CallScreeningRole.requestIntent(context)?.let(roleLauncher::launch)
-                        }
-                    )
-                }
                 SecondaryButton(
                     text = "Battery settings",
                     onClick = {
@@ -317,6 +303,9 @@ private fun OnboardingScreen(onComplete: () -> Unit) {
                         refreshPermissions()
                     }
                 )
+                CallerIdRoleOption(context) {
+                    CallScreeningRole.requestIntent(context)?.let(roleLauncher::launch)
+                }
                 Button(
                     onClick = onComplete,
                     enabled = ready,
@@ -597,14 +586,11 @@ private fun PermissionsScreen() {
     Page(title = "Permissions") {
         PermissionChecklist(refreshKey)
         PrimaryButton(text = "Enable missing permissions", onClick = { launcher.launch(requiredRuntimePermissions()) })
-        if (CallScreeningRole.isAvailable(context)) {
-            SecondaryButton(
-                text = if (CallScreeningRole.isHeld(context)) "Caller ID enabled" else "Enable caller ID",
-                onClick = { CallScreeningRole.requestIntent(context)?.let(roleLauncher::launch) }
-            )
-        }
         SecondaryButton(text = "Overlay permission", onClick = { context.openOverlaySettings() })
         SecondaryButton(text = "Battery settings", onClick = { context.openBatterySettings() })
+        CallerIdRoleOption(context) {
+            CallScreeningRole.requestIntent(context)?.let(roleLauncher::launch)
+        }
     }
 }
 
@@ -716,10 +702,15 @@ private fun PermissionChecklist(refreshKey: Int) {
             PermissionStatusRow(permissionLabel(permission), context.hasPermission(permission))
         }
         PermissionStatusRow("Overlay", context.canDrawOverlaysCompat())
-        if (CallScreeningRole.isAvailable(context)) {
-            PermissionStatusRow("Caller ID role", CallScreeningRole.isHeld(context))
-        }
         PermissionStatusRow("Battery unrestricted", context.isIgnoringBatteryOptimizations(), required = false)
+        if (CallScreeningRole.isAvailable(context)) {
+            PermissionStatusRow(
+                label = "Caller ID role",
+                granted = CallScreeningRole.isHeld(context),
+                required = false,
+                optionalLabel = "Optional"
+            )
+        }
     }
     ignored.hashCode()
 }
@@ -864,15 +855,54 @@ private fun ToggleRow(label: String, checked: Boolean, onCheckedChange: (Boolean
 }
 
 @Composable
-private fun PermissionStatusRow(label: String, granted: Boolean, required: Boolean = true) {
+private fun CallerIdRoleOption(context: Context, onRequest: () -> Unit) {
+    if (!CallScreeningRole.isAvailable(context)) return
+
+    ListCard {
+        Text(
+            "Optional caller ID access",
+            color = Black,
+            fontWeight = FontWeight.SemiBold
+        )
+        Text(
+            "Improves caller-number detection, especially for a second incoming call.",
+            color = InkMuted,
+            style = MaterialTheme.typography.bodySmall
+        )
+        SecondaryButton(
+            text = if (CallScreeningRole.isHeld(context)) {
+                "Caller ID access enabled"
+            } else {
+                "Enable optional caller ID"
+            },
+            onClick = onRequest
+        )
+    }
+}
+
+@Composable
+private fun PermissionStatusRow(
+    label: String,
+    granted: Boolean,
+    required: Boolean = true,
+    optionalLabel: String = "Recommended"
+) {
     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
         Column(Modifier.weight(1f)) {
             Text(label, color = Black, fontWeight = FontWeight.SemiBold)
-            if (!required) Text("Recommended", color = InkMuted, style = MaterialTheme.typography.bodySmall)
+            if (!required) Text(optionalLabel, color = InkMuted, style = MaterialTheme.typography.bodySmall)
         }
         Text(
-            if (granted) "Enabled" else "Missing",
-            color = if (granted) SuccessGreen else ErrorRed,
+            when {
+                granted -> "Enabled"
+                required -> "Missing"
+                else -> "Optional"
+            },
+            color = when {
+                granted -> SuccessGreen
+                required -> ErrorRed
+                else -> InkMuted
+            },
             fontWeight = FontWeight.SemiBold
         )
     }
