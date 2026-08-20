@@ -3,6 +3,7 @@ package com.example.restaurant_call_assistant.data
 import android.content.Context
 import org.json.JSONArray
 import org.json.JSONObject
+import java.util.Locale
 
 class LocalStore(context: Context) {
     private val prefs = context.applicationContext.getSharedPreferences("reservation_helper", Context.MODE_PRIVATE)
@@ -112,7 +113,7 @@ class LocalStore(context: Context) {
         customerName = optString("customerName"),
         phoneNumber = optString("phoneNumber").ifBlank { null },
         reservationDate = optString("reservationDate"),
-        reservationTime = optString("reservationTime"),
+        reservationTime = normalizeReservationTime(optString("reservationTime")),
         durationMinutes = optInt("durationMinutes", 240),
         partySize = if (has("partySize") && !isNull("partySize")) optInt("partySize") else null,
         adultCount = if (has("adultCount") && !isNull("adultCount")) optInt("adultCount") else null,
@@ -157,6 +158,21 @@ class LocalStore(context: Context) {
         .put("callTriggerMode", callTriggerMode.name)
         .put("autoFillCallerNumber", autoFillCallerNumber)
         .put("keepPopupOpenAfterCall", keepPopupOpenAfterCall)
+
+    private fun normalizeReservationTime(value: String): String {
+        val trimmed = value.trim()
+        val legacyTime = Regex("^(\\d{1,2}):([0-5]\\d)$").matchEntire(trimmed)
+            ?: return trimmed.uppercase(Locale.US)
+        val hour = legacyTime.groupValues[1].toIntOrNull()
+            ?.takeIf { it in 0..23 }
+            ?: return trimmed
+        val displayHour = when (val twelveHour = hour % 12) {
+            0 -> 12
+            else -> twelveHour
+        }
+        val period = if (hour < 12) "AM" else "PM"
+        return "$displayHour:${legacyTime.groupValues[2]} $period"
+    }
 
     companion object {
         private const val KEY_RESERVATIONS = "reservations"

@@ -158,7 +158,7 @@ fun Reservation.eventDescription(): String = buildString {
 }
 
 fun Reservation.startMillis(): Long {
-    val parser = SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.US)
+    val parser = SimpleDateFormat("yyyy-MM-dd h:mm a", Locale.US)
     parser.isLenient = false
     return parser.parse("$reservationDate $reservationTime")?.time
         ?: throw IllegalArgumentException("Invalid reservation date or time.")

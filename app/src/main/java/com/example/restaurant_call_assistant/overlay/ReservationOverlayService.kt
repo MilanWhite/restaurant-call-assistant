@@ -511,7 +511,7 @@ class ReservationOverlayService : Service() {
                 selected.set(Calendar.MINUTE, minute)
                 selected.set(Calendar.SECOND, 0)
                 value.date = SimpleDateFormat("yyyy-MM-dd", Locale.US).format(selected.time)
-                value.time = SimpleDateFormat("HH:mm", Locale.US).format(selected.time)
+                value.time = SimpleDateFormat("h:mm a", Locale.US).format(selected.time)
                 value.updateDisplay()
             },
             selected.get(Calendar.HOUR_OF_DAY),
@@ -828,7 +828,7 @@ class ReservationOverlayService : Service() {
     }
 
     private fun isValidDateTime(date: String, time: String): Boolean {
-        val parser = SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.US)
+        val parser = SimpleDateFormat("yyyy-MM-dd h:mm a", Locale.US)
         parser.isLenient = false
         return runCatching { parser.parse("$date $time") }.getOrNull() != null
     }
@@ -873,7 +873,7 @@ class ReservationOverlayService : Service() {
             }
             set(Calendar.SECOND, 0)
         }
-        return SimpleDateFormat("HH:mm", Locale.US).format(calendar.time)
+        return SimpleDateFormat("h:mm a", Locale.US).format(calendar.time)
     }
 
     private fun dp(value: Int): Int = (value * resources.displayMetrics.density).toInt()
@@ -891,7 +891,7 @@ class ReservationOverlayService : Service() {
         var time: String
     ) {
         fun calendar(): Calendar {
-            val parser = SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.US).apply {
+            val parser = SimpleDateFormat("yyyy-MM-dd h:mm a", Locale.US).apply {
                 isLenient = false
             }
             val parsed = runCatching { parser.parse("$date $time") }.getOrNull()

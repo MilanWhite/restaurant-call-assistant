@@ -12,7 +12,7 @@ class CalendarRepositoryTest {
             customerName = "Alex",
             phoneNumber = "416-555-1234",
             reservationDate = "2026-07-21",
-            reservationTime = "18:30",
+            reservationTime = "6:30 PM",
             durationMinutes = 120,
             partySize = 4,
             tablePreference = null,
@@ -24,7 +24,7 @@ class CalendarRepositoryTest {
             errorMessage = null
         )
 
-        assertEquals("Alex - 416-555-1234 - 18:30", reservation.eventTitle())
+        assertEquals("Alex - 416-555-1234 - 6:30 PM", reservation.eventTitle())
     }
 
     @Test
@@ -33,7 +33,7 @@ class CalendarRepositoryTest {
             customerName = "Alex",
             phoneNumber = "416-555-1234",
             reservationDate = "2026-07-21",
-            reservationTime = "18:30",
+            reservationTime = "6:30 PM",
             durationMinutes = 120,
             partySize = 4,
             tablePreference = null,
@@ -57,7 +57,7 @@ class CalendarRepositoryTest {
             customerName = "Alex",
             phoneNumber = "416-555-1234",
             reservationDate = "2026-07-21",
-            reservationTime = "18:30",
+            reservationTime = "6:30 PM",
             durationMinutes = 120,
             partySize = 5,
             tablePreference = "Patio",
