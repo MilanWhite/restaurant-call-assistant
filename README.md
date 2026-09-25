@@ -2,7 +2,7 @@
 
 An Android reservation helper that opens a floating form during incoming calls, pre-fills caller details, and creates calendar events without leaving the call.
 
-![Restaurant Call Assistant](https://github.com/user-attachments/assets/08677458-565e-495d-b463-9e30dc517c21)
+![Restaurant Call Assistant](https://github.com/user-attachments/assets/104cef34-0448-4509-aff1-0556c1b70bcd)
 
 ## Overview
 
